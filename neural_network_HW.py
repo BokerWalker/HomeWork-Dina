@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 #Niv Lifshitz and Liam Brinker.
 #after a lot of debugging we found out what was wrong.
@@ -22,6 +22,7 @@ class Neuron:
   def __init__(self, weights, bias):
     self.weights = weights
     self.bias = bias
+    
 
   def feedforward(self, inputs):
     # Weight inputs, add bias, then use the activation function
@@ -34,7 +35,7 @@ class OurNeuralNetwork:
         self.Hweights = np.full((2,2),0.5)
         self.Oweights = np.full((1,2),0.5)
         self.biases = np.array([1,1,1],dtype = 'float64')
-
+        self.loss_history = []
     def feedforward(self, x):
   # x is a numpy array with 2 elements.
         
@@ -61,7 +62,7 @@ class OurNeuralNetwork:
             for x, y_true in zip(data, all_y_trues):
         # --- Do a feedforward (we'll need these values later)
                 
-                #2,2       [[w1,w2][w3,w4] ]    [[x1,x2][x1,x2]]
+                #1,2       [[w1,w2][w3,w4]]    [[x1,x2][x1,x2]]
                 sums_H = (self.Hweights * x).sum(axis=1) + self.biases[:2]
                 #sums_H = np.array([sums_H[0].sum(),sums_H[1].sum()])
                 #2,2
@@ -88,16 +89,21 @@ class OurNeuralNetwork:
                 self.Hweights -= learn_rate * d_L_ypred * d_ypred_H * H_derives
                 #1,2
                 self.Oweights -= learn_rate * d_L_ypred * O1_derives[:2]
+                
+                
                 #    1,3           k           k                 1,3                                 1,3
                 self.biases -= learn_rate * d_L_ypred * np.append(d_ypred_H,[1]) * np.array([H1_derives[-1],H2_derives[-1],O1_derives[-1]])
+            y_preds = np.apply_along_axis(self.feedforward, 1, data)
+            loss = mse_loss(all_y_trues,y_preds)
+            self.loss_history.append(loss)
             if epoch % 10 == 0:
-                y_preds = np.apply_along_axis(self.feedforward, 1, data)
-                loss = mse_loss(all_y_trues, y_preds)
                 print("Epoch %d loss: %.3f" % (epoch, loss))
-
-                                   
-                
-                
+        fig, ax = plt.subplots()
+        ax.set_xlabel('epoch')
+        ax.set_ylabel('loss')
+        ax.plot(self.loss_history)
+        
+                          
 # Define dataset
 data = np.array([
   [-2, -1],  # Alice
